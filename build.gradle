@@ -1,0 +1,86 @@
+//ext {
+//    userName = "" // 个人jCenter用户名
+//    apiKey = "" // 个人jCenter apiKey
+//    groupId = 'com.github.toolkit'// 要上传的库的groupId
+//    artifactId = "gradle" // 要上传的库的artifactId
+//    versionName = '0.0.7' // 要上传的库的版本号，支持正式版和-SNAPSHOT版本
+//    repoName = "" // 仓库名称，要上传到哪个仓库下，如Maven
+//    pkgName = "" // 要上传的库的名称，如Gson
+//    pkgType = "" // 要上传的库的类型，如aar，jar，so等，选填，不填默认aar
+//    pkgDesc = "" //要上传的库的描述，选填
+//    versoionControlAddress = ""// 选填，如https:www.github.xxx.git
+//}
+
+// 1. 添加jcenter插件依赖：classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.5'
+// 2. 
+
+// 发布库到mavenLocal以及jCenter
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'maven-publish'
+
+/**
+ * 是否release构建
+ */
+def isReleaseBuild() {
+    return project.versionName.contains("-SNAPSHOT")
+}
+
+task sourceJar(type: Jar) {
+    from sourceSets.main.kotlin.srcDirs
+    from sourceSets.main.java.srcDirs
+    classifier "sources"
+}
+
+def pomConfig = {
+    developers {
+        developer {
+            id "renqiangqiang"
+            name "renqiangqiang"
+            email "renqiangqiang.china@gmail.com"
+        }
+    }
+    if(project.versoionControlAddress!=null){
+        scm {
+            url project.versoionControlAddress
+        }
+    }
+
+}
+
+publishing {
+    publications {
+        MyPublication(MavenPublication) {
+            from components.java
+
+            groupId project.groupId
+            artifactId project.artifactId
+            version project.versionName
+
+            artifact sourceJar
+            def packagingType = proejct.pkgType ?: "aar"
+            pom.setPackaging(packagingType)
+
+            pom.withXml {
+                def root = asNode()
+                def desc = project.pkgDesc ?: "a artifact file."
+                root.appendNode('description', desc)
+                root.appendNode('name', project.artifactId)
+                root.children().last() + pomConfig
+            }
+        }
+    }
+}
+
+bintray {
+    user = projct.userName
+    key = project.apiKey
+    publications = ['MyPublication']
+    pkg {
+        repo = project.repoName
+        name = project.pkgName
+        publish = true
+        version {
+            name = project.versionName
+        }
+    }
+}
