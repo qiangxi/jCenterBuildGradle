@@ -14,16 +14,26 @@
 //}
 
 // 3. 在配置下方添加：apply from: "https://github.com/qiangxi/jCenterBuildGradle/blob/master/build.gradle"
+// 4. 执行 gradlew bintrayUpload（上传到jCenter），gradlew publishToMavenLocal (发布到本地)
 
-// 发布库到mavenLocal以及jCenter
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'maven-publish'
+
+def getLocalProperties() {
+    def p = new Properties()
+    p.load(project.rootProject.file('local.properties').newDataInputStream())
+    return p
+}
+
+def getUsername() {
+    return getLocalProperties().getProperty('USERNAME', "")
+}
 
 /**
  * 是否release构建
  */
 def isReleaseBuild() {
-    return project.versionName.contains("-SNAPSHOT")
+    return !project.versionName.contains("-SNAPSHOT")
 }
 
 task sourceJar(type: Jar) {
@@ -40,7 +50,7 @@ def pomConfig = {
             email "renqiangqiang.china@gmail.com"
         }
     }
-    if(project.versoionControlAddress!=null){
+    if (project.versoionControlAddress != null) {
         scm {
             url project.versoionControlAddress
         }
@@ -58,7 +68,7 @@ publishing {
             version project.versionName
 
             artifact sourceJar
-            def packagingType = proejct.pkgType ?: "aar"
+            def packagingType = project.pkgType ?: "aar"
             pom.setPackaging(packagingType)
 
             pom.withXml {
@@ -67,9 +77,9 @@ publishing {
                 root.appendNode('description', desc)
                 root.appendNode('name', project.artifactId)
                 // dependencies
-                configs = ["implementation","api"]
-                def dependenciesNode = root.getAt('dependencies')[0] ?: root.appendNode('dependencies')
-                configs.each {config ->
+                def configs = ["implementation", "api"]
+                def dependenciesNode = root['dependencies'][0] ?: root.appendNode('dependencies')
+                configs.each { config ->
                     configurations[config].allDependencies.each {
                         if (it.name != 'unspecified') {
                             def dependencyNode = dependenciesNode.appendNode('dependency')
@@ -81,13 +91,13 @@ publishing {
                 }
                 root.children().last() + pomConfig
             }
-           
+
         }
     }
 }
 
 bintray {
-    user = projct.userName
+    user = project.userName
     key = project.apiKey
     publications = ['MyPublication']
     pkg {
@@ -97,9 +107,9 @@ bintray {
         licenses = ['Apache-2.0']
         version {
             name = project.versionName
-            released  = new Date().format("YYYY-MM-dd'T'HH:mm:ss.SSSZZ")
+            released = new Date().format("YYYY-MM-dd'T'HH:mm:ss.SSSZZ")
         }
-        if(project.versoionControlAddress != null) {
+        if (project.versoionControlAddress != null) {
             vcsUrl = project.versoionControlAddress
         }
     }
