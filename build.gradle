@@ -13,7 +13,7 @@
 //    versoionControlAddress = ""// 选填，如https:www.github.xxx.git
 //}
 
-// 3. 在配置下方添加：apply from: "https://github.com/qiangxi/jCenterBuildGradle/blob/master/build.gradle"
+// 3. 在配置下方添加：apply from: "https://raw.githubusercontent.com/qiangxi/jCenterBuildGradle/master/build.gradle"
 // 4. 执行 gradlew bintrayUpload（上传到jCenter），gradlew publishToMavenLocal (发布到本地)
 
 apply plugin: 'com.jfrog.bintray'
